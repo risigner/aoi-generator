@@ -4,7 +4,8 @@ from src.fabric_analyzer.advanced_african_fabric_pipeline import advanced_africa
 
 
 results = advanced_african_fabric_pipeline(
-"src/model_avatar_gen/seun.png",  # Your image path
+# "src/model_avatar_gen/seun.png",  
+"src/model_avatar_gen/rita.png",  
 target_colors=[
     ("Purple", (93, 21, 80)),          # A deep, powerful blue often associated with royalty in West African cultures.
     ("Emerald Green", (0, 148, 115)),         # A rich, jewel-toned green that signifies wealth and nature.
