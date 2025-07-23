@@ -4,6 +4,12 @@ import cv2
 import numpy as np
 from PIL import Image
 
+import numpy as np
+import cv2
+from PIL import Image
+
+
+
 class ImageProcessor:
     """Utility class for image processing and saving"""
     
@@ -72,3 +78,127 @@ class ImageProcessor:
         mask = alpha_channel > 0
         mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
         return np.where(mask_3ch, image, bg)
+    
+    @staticmethod
+    def fill_with_image_background(image: np.ndarray, alpha_channel: np.ndarray, bg_image_path: str) -> np.ndarray:
+        """Replaces transparent pixels with an image background"""
+        if alpha_channel is None:
+            return image
+        
+        # Load background image
+        bg_image = cv2.imread(bg_image_path)
+        if bg_image is None:
+            raise ValueError(f"Could not load background image: {bg_image_path}")
+        
+        bg_image = cv2.cvtColor(bg_image, cv2.COLOR_BGR2RGB)
+        
+        # Resize background to match foreground dimensions
+        h, w = image.shape[:2]
+        bg_resized = cv2.resize(bg_image, (w, h))
+        
+        # Apply alpha blending
+        mask = alpha_channel > 0
+        mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+        
+        return np.where(mask_3ch, image, bg_resized)
+    
+    @staticmethod
+    def fill_with_image_background_from_array(image: np.ndarray, alpha_channel: np.ndarray, bg_image: np.ndarray) -> np.ndarray:
+        """Replaces transparent pixels with an image background (from numpy array)"""
+        if alpha_channel is None:
+            return image
+        
+        # Resize background to match foreground dimensions
+        h, w = image.shape[:2]
+        bg_resized = cv2.resize(bg_image, (w, h))
+        
+        # Apply alpha blending
+        mask = alpha_channel > 0
+        mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+        
+        return np.where(mask_3ch, image, bg_resized)
+    
+    @staticmethod
+    def fill_with_tiled_background(image: np.ndarray, alpha_channel: np.ndarray, bg_image_path: str) -> np.ndarray:
+        """Replaces transparent pixels with a tiled background pattern"""
+        if alpha_channel is None:
+            return image
+        
+        # Load background tile
+        bg_tile = cv2.imread(bg_image_path)
+        if bg_tile is None:
+            raise ValueError(f"Could not load background image: {bg_image_path}")
+        
+        bg_tile = cv2.cvtColor(bg_tile, cv2.COLOR_BGR2RGB)
+        
+        # Create tiled background
+        h, w = image.shape[:2]
+        tile_h, tile_w = bg_tile.shape[:2]
+        
+        # Calculate how many tiles we need
+        tiles_y = (h + tile_h - 1) // tile_h
+        tiles_x = (w + tile_w - 1) // tile_w
+        
+        # Create tiled background
+        tiled_bg = np.tile(bg_tile, (tiles_y, tiles_x, 1))
+        tiled_bg = tiled_bg[:h, :w]  # Crop to exact size
+        
+        # Apply alpha blending
+        mask = alpha_channel > 0
+        mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+        
+        return np.where(mask_3ch, image, tiled_bg)
+    
+    @staticmethod
+    def fill_with_blurred_background(image: np.ndarray, alpha_channel: np.ndarray, bg_image_path: str, blur_strength: int = 15) -> np.ndarray:
+        """Replaces transparent pixels with a blurred version of a background image"""
+        if alpha_channel is None:
+            return image
+        
+        # Load and process background
+        bg_image = cv2.imread(bg_image_path)
+        if bg_image is None:
+            raise ValueError(f"Could not load background image: {bg_image_path}")
+        
+        bg_image = cv2.cvtColor(bg_image, cv2.COLOR_BGR2RGB)
+        
+        # Resize and blur background
+        h, w = image.shape[:2]
+        bg_resized = cv2.resize(bg_image, (w, h))
+        bg_blurred = cv2.GaussianBlur(bg_resized, (blur_strength, blur_strength), 0)
+        
+        # Apply alpha blending
+        mask = alpha_channel > 0
+        mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+        
+        return np.where(mask_3ch, image, bg_blurred)
+    
+    @staticmethod
+    def fill_with_gradient_overlay(image: np.ndarray, alpha_channel: np.ndarray, bg_image_path: str, gradient_alpha: float = 0.3) -> np.ndarray:
+        """Combines background image with a gradient overlay"""
+        if alpha_channel is None:
+            return image
+        
+        # Load background
+        bg_image = cv2.imread(bg_image_path)
+        if bg_image is None:
+            raise ValueError(f"Could not load background image: {bg_image_path}")
+        
+        bg_image = cv2.cvtColor(bg_image, cv2.COLOR_BGR2RGB)
+        
+        # Resize background
+        h, w = image.shape[:2]
+        bg_resized = cv2.resize(bg_image, (w, h))
+        
+        # Create gradient (top to bottom)
+        gradient = np.linspace(0, 255, h, dtype=np.uint8)
+        gradient = np.tile(gradient.reshape(-1, 1, 1), (1, w, 3))
+        
+        # Blend background with gradient
+        bg_with_gradient = cv2.addWeighted(bg_resized, 1-gradient_alpha, gradient, gradient_alpha, 0)
+        
+        # Apply alpha blending
+        mask = alpha_channel > 0
+        mask_3ch = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
+        
+        return np.where(mask_3ch, image, bg_with_gradient)

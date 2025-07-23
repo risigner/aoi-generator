@@ -336,7 +336,7 @@ def advanced_african_fabric_pipeline(image_path, target_colors=None, load_existi
     
     # Try to load existing mask
     if load_existing_mask:
-        mask, metadata = mask_gen.load_mask(image_path)
+        mask, metadata = mask_gen.load_mask("rita","female")
     
     # Create new mask if none exists
     if mask is None:
@@ -357,7 +357,7 @@ def advanced_african_fabric_pipeline(image_path, target_colors=None, load_existi
         )
         
         # Save mask for future use
-        mask_gen.save_mask_with_custom_image(mask, image_path, all_polygons)
+        mask_gen.save_mask(mask, image_path, all_polygons)
     
     # Initialize recolorer
     recolorer = AfricanClothingStyleRecolorer(img, mask)
@@ -403,7 +403,8 @@ def advanced_african_fabric_pipeline(image_path, target_colors=None, load_existi
         if trim_images:
             trimmed = ImageProcessor.trim_recolored_image(img, result, mask, trim_strength=0.95)
             if alpha_channel is not None:
-                trimmed = ImageProcessor.fill_transparent_background(trimmed, alpha_channel)
+                trimmed = ImageProcessor.fill_with_blurred_background(trimmed, alpha_channel,"src/model_avatar_gen/bg.jpg")
+                # trimmed = ImageProcessor.fill_transparent_background(trimmed, alpha_channel)
             results_trimmed[f"{color_name} (Trimmed)"] = trimmed
     
     # Fixed visualization with correct dimensions

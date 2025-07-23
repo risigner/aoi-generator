@@ -21,6 +21,19 @@ class EnhancedAfricanFabricAnalyzer:
         lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
         hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         
+        # Convert mask to single channel if needed
+        if mask.ndim == 3:
+            mask = cv2.cvtColor(mask, cv2.COLOR_RGB2GRAY)
+
+        # Resize mask if needed
+        if mask.shape != gray.shape:
+            print(f"[Warning] Resizing mask from {mask.shape} to {gray.shape}")
+            mask = cv2.resize(mask, (gray.shape[1], gray.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+        # Ensure dtype match
+        if mask.dtype != gray.dtype:
+            mask = mask.astype(gray.dtype)
+
         # Apply mask to focus analysis on fabric area
         masked_gray = cv2.bitwise_and(gray, mask)
         

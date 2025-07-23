@@ -109,12 +109,12 @@ class BaseAfricanFabricMaskGenerator:
         
         return mask_path, metadata_path
 
-    def load_mask(self, image_path):
+    def load_mask(self, image_path,gender):
         """Load previously saved mask"""
         image_name = Path(image_path).stem
-        mask_path = self.mask_save_dir / f"{image_name}_mask.png"
-        metadata_path = self.mask_save_dir / f"{image_name}_metadata.json"
-        
+        mask_path = self.mask_save_dir / f"{gender}/{image_name}_mask.png"
+        metadata_path = self.mask_save_dir / f"{gender}/{image_name}_metadata.json"
+        print(mask_path)
         if mask_path.exists() and metadata_path.exists():
             mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
             with open(metadata_path, 'r') as f:
@@ -124,4 +124,30 @@ class BaseAfricanFabricMaskGenerator:
             return mask, metadata
         
         return None, None
+    
+    def load_mask_with_custom_image(self, image_path):
+        """Load saved mask and metadata given the original image path"""
+        image_name = Path(image_path).stem
+        print(image_name)
+        metadata_path = self.mask_save_dir / f"male/{image_name}_metadata.json"
+        mask_path = self.mask_save_dir / f"male/{image_name}_mask.png"
+
+        if not metadata_path.exists() or not mask_path.exists():
+            raise FileNotFoundError(f"Metadata or mask file not found for {image_name}")
+
+        # Load metadata
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+
+        # Load RGB mask
+        mask_rgb = cv2.imread(str(mask_path))
+        if mask_rgb is None:
+            raise ValueError(f"Could not read mask image at {mask_path}")
+        mask_rgb = cv2.cvtColor(mask_rgb, cv2.COLOR_BGR2RGB)
+
+        # Optional: validate image_shape
+        if tuple(metadata['image_shape']) != tuple(self.image_shape):
+            print("[Warning] Loaded image shape doesn't match current config")
+
+        return mask_rgb, metadata
 
